@@ -12,7 +12,7 @@ function smaller(a) {
 
 function between(a, b) {
     return (x) => {
-        return x > a && x < b;
+        return x >= a && x <= b;
     }
 }
 
