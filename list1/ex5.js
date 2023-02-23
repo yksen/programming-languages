@@ -9,11 +9,20 @@ function* divisors(n) {
 function* primes(n) {
     for (let i = 2; i <= n; i++) {
         let divisor_count = 0;
-        for (let j of divisors(i)) {
+        for (let _ of divisors(i)) {
             divisor_count++;
         }
         if (divisor_count === 2) {
             yield i;
+        }
+    }
+}
+
+function* factorize(n) {
+    for (let i of primes(n)) {
+        while (n % i === 0) {
+            yield i;
+            n /= i;
         }
     }
 }
