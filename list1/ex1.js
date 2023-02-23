@@ -17,7 +17,7 @@ function between(a, b) {
 }
 
 function test(array, f, a, b) {
-    console.log(array);
+    console.log("Test", array);
     console.log("filter", array.filter(f(a, b)));
     console.log("find", array.find(f(a, b)));
     console.log("findIndex", array.findIndex(f(a, b)));
