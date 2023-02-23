@@ -32,3 +32,16 @@ function checkCircleGettersAndSetters(circle) {
 }
 
 checkCircleGettersAndSetters(new Circle(1));
+
+let shapes = [new Square(1), new Circle(1), new Circle(2), new Square(2)];
+
+let sum_of_areas = 0;
+let sum_of_circumferences = 0;
+
+for (let shape of shapes) {
+    sum_of_areas += shape.area;
+    sum_of_circumferences += shape.circumference;
+}
+
+console.log(`Sum of areas: ${sum_of_areas}`);
+console.log(`Sum of circumferences: ${sum_of_circumferences}`);
