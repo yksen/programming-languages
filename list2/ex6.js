@@ -2,10 +2,10 @@ function arithmetic_seq({ ...data }) {
     let args = Object.keys(data);
     let a = args.filter(arg => arg.startsWith('a'));
     let s = args.filter(arg => arg.startsWith("sum"));
-    let r = data.r;
-    let a1;
+    let r = (data.r == undefined) ? null : data.r;
+    let a1 = null;
 
-    if (r != undefined && a.length == 1) {
+    if (r != null && a.length == 1) {
         [ax, n] = [data[a[0]], a[0].slice(1)];
         a1 = ax - r * (n - 1);
     }
@@ -14,7 +14,7 @@ function arithmetic_seq({ ...data }) {
         r = (ay - ax) / (n2 - n1);
         a1 = ax - r * (n1 - 1);
     }
-    else if (s.length == 1 && r != undefined) {
+    else if (s.length == 1 && r != null) {
         [sx, n] = [data[s[0]], s[0].slice(3)];
         a1 = (2 * sx / n - r * (n - 1)) / 2;
     }
@@ -35,7 +35,7 @@ function arithmetic_seq({ ...data }) {
         get r() { return r; },
         *[Symbol.iterator]() {
             let i = 1;
-            while (a1 != undefined && r != undefined) {
+            while (a1 != null && r != null) {
                 yield this.a(i++);
             }
         },
@@ -43,9 +43,10 @@ function arithmetic_seq({ ...data }) {
 }
 
 function test(object) {
-    let iter = object[Symbol.iterator]();
-    for (let i = 0; i < 5; i++) {
-        process.stdout.write(iter.next().value + " ");
+    let i = 0;
+    for (let x of object) {
+        process.stdout.write(x + " ");
+        if (++i == 5) break;
     }
     console.log();
 }
@@ -55,3 +56,8 @@ test(arithmetic_seq({ a3: 8, a5: 2 }));
 test(arithmetic_seq({ sum5: 15, r: 1 }));
 test(arithmetic_seq({ sum3: 12, sum6: 42 }));
 test(arithmetic_seq({ sum5: 20, a2: 13 }));
+
+let t = arithmetic_seq({ a7: 5 });
+test(t);
+console.log(t.a(3));
+console.log(t.sum(5));
