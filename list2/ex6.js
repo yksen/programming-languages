@@ -1,4 +1,4 @@
-function arithmetic_seq({ ...data }) {
+function arithmetic_sequence({ ...data }) {
     let args = Object.keys(data);
     let a = args.filter(arg => arg.startsWith('a'));
     let s = args.filter(arg => arg.startsWith("sum"));
@@ -51,13 +51,13 @@ function test(object) {
     console.log();
 }
 
-test(arithmetic_seq({ a7: 9, r: 2 }));
-test(arithmetic_seq({ a3: 8, a5: 2 }));
-test(arithmetic_seq({ sum5: 15, r: 1 }));
-test(arithmetic_seq({ sum3: 12, sum6: 42 }));
-test(arithmetic_seq({ sum5: 20, a2: 13 }));
+test(arithmetic_sequence({ a7: 9, r: 2 }));
+test(arithmetic_sequence({ a3: 8, a5: 2 }));
+test(arithmetic_sequence({ sum5: 15, r: 1 }));
+test(arithmetic_sequence({ sum3: 12, sum6: 42 }));
+test(arithmetic_sequence({ sum5: 20, a2: 13 }));
 
-let t = arithmetic_seq({ a7: 5 });
+let t = arithmetic_sequence({ a7: 5 });
 test(t);
 console.log(t.a(3));
 console.log(t.sum(5));
