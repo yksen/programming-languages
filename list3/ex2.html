@@ -1,0 +1,27 @@
+<input></input>
+
+<table id="digits"></table>
+<button>+</button>
+<button>-</button>
+<button>*</button>
+<button>/</button>
+<button id="evaluate">=</button>
+
+<script>
+    for (let i = 0; i < 10; i++) {
+        if (i % 3 == 0)
+            document.querySelector("#digits").appendChild(document.createElement("tr"));
+        let td = document.createElement("td");
+        td.innerHTML = `<button>${i}`;
+        document.querySelector("#digits").lastChild.appendChild(td);
+    }
+    let input = document.querySelector("input");
+
+    document.querySelectorAll("button").forEach((button) => {
+        button.onclick = () => {
+            input.value += button.innerHTML;
+        }
+    });
+
+    document.querySelector("#evaluate").onclick = () => input.value = eval(input.value);
+</script>

@@ -1,0 +1,73 @@
+<style>
+    table {
+        border-collapse: collapse;
+    }
+
+    td {
+        border: 1px solid black;
+        width: 30px;
+        height: 30px;
+    }
+
+    table button {
+        width: 100%;
+        height: 100%;
+    }
+
+    .exploded {
+        background-color: red;
+    }
+</style>
+
+<button onclick="generateBoard(10, 0.1)">Easy</button>
+<button onclick="generateBoard(20, 0.2)">Medium</button>
+<button onclick="generateBoard(30, 0.3)">Hard</button>
+<table></table>
+
+<script>
+    function generateBoard(board_size, bomb_percentage) {
+        let board = document.querySelector("table");
+        board.innerHTML = "";
+        for (let i = 0; i < board_size; i++) {
+            let tr = document.createElement("tr");
+            board.appendChild(tr);
+            for (let j = 0; j < board_size; j++) {
+                let td = document.createElement("td");
+                td.innerHTML = "<button>";
+                board.appendChild(td);
+            }
+        }
+
+        let indices = [...Array(board_size ** 2).keys()];
+        let random_indices = [];
+        for (let i = 0; i < board_size ** 2 * bomb_percentage; i++) {
+            let random_index = Math.floor(Math.random() * indices.length);
+            random_indices.push(indices[random_index]);
+            indices.splice(random_index, 1);
+        }
+
+        let buttons = document.querySelectorAll("table button");
+        for (let index of random_indices) {
+            buttons[index].className = "bomb";
+        }
+
+        document.querySelectorAll(".bomb").forEach((button) => {
+            button.onclick = () => explode();
+        })
+
+        document.querySelectorAll("table button:not(.bomb)").forEach((button) => {
+            button.onclick = () => check(button);
+        })
+    }
+
+    function explode() {
+        document.querySelectorAll(".bomb").forEach((button) => {
+            button.className = "exploded";
+        })
+    }
+
+    function check(cell) {
+
+    }
+
+</script>
