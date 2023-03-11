@@ -6,7 +6,7 @@
     }
 </style>
 
-<button onclick="generateBoard(9)">Generate</button>
+<button onclick="generateBoard(18)">Generate</button>
 <button onclick="solve()">Solve</button>
 <button onclick="play()">Play</button>
 
@@ -15,9 +15,9 @@
 <script>
     const board = document.querySelector("table");
     const board_size = 9;
-    initializeBoard();
+    createBoard();
 
-    function initializeBoard() {
+    function createBoard() {
         for (let i = 0; i < board_size; i++) {
             let tr = document.createElement("tr");
             for (let j = 0; j < board_size; j++) {
@@ -29,35 +29,50 @@
     }
 
     function generateBoard(n) {
+        for (let i = 0; i < board_size; i++) {
+            for (let j = 0; j < board_size; j++) {
+                board.rows[i].cells[j].innerText = "";
+            }
+        }
         let indices = [...Array(board_size ** 2).keys()];
         for (let i = 0; i < n; i++) {
-            let random_index = indices.splice(Math.floor(Math.random() * indices.length), 1)[0];
-            let possible_numbers = [...Array(9).keys()].map(x => x + 1);
-            for (let j = 0; j < board_size; j++) {
-                let cell = board.rows[Math.floor(random_index / board_size)].cells[j];
-                if (cell.innerHTML != "") {
-                    possible_numbers.splice(possible_numbers.indexOf(parseInt(cell.innerHTML)), 1);
-                }
+            let candidate_numbers = [...Array(9).keys()].map(x => x + 1);
 
-                cell = board.rows[j].cells[random_index % board_size];
-                if (cell.innerHTML != "") {
-                    possible_numbers.splice(possible_numbers.indexOf(parseInt(cell.innerHTML)), 1);
+            let random_index = indices.splice(Math.floor(Math.random() * indices.length), 1)[0];
+            let random_row = Math.floor(random_index / board_size);
+            let random_column = random_index % board_size;
+
+            for (let j = 0; j < board_size; j++) {
+                let number = board.rows[random_row].cells[j].innerText;
+                if (number != "") {
+                    candidate_numbers.splice(candidate_numbers.indexOf(parseInt(number)), 1);
                 }
             }
 
-            let square_row = Math.floor(random_index / board_size) - Math.floor(random_index / board_size) % 3;
-            let square_column = random_index % board_size - random_index % board_size % 3;
-            for (let j = square_row; j < square_row + 3; j++) {
-                for (let k = square_column; k < square_column + 3; k++) {
-                    let cell = board.rows[j].cells[k];
-                    if (cell.innerHTML != "") {
-                        possible_numbers.splice(possible_numbers.indexOf(parseInt(cell.innerHTML)), 1);
+            for (let j = 0; j < board_size; j++) {
+                let number = board.rows[j].cells[random_column].innerText;
+                if (number != "") {
+                    candidate_numbers.splice(candidate_numbers.indexOf(parseInt(number)), 1);
+                }
+            }
+
+            let square_row = Math.floor(random_row / 3);
+            let square_column = Math.floor(random_column / 3);
+            for (let j = 0; j < 3; j++) {
+                for (let k = 0; k < 3; k++) {
+                    let number = board.rows[square_row * 3 + j].cells[square_column * 3 + k].innerText;
+                    if (number != "") {
+                        candidate_numbers.splice(candidate_numbers.indexOf(parseInt(number)), 1);
                     }
                 }
             }
 
-            let random_cell = board.rows[Math.floor(random_index / board_size)].cells[random_index % board_size];
-            random_cell.innerHTML = possible_numbers[Math.floor(Math.random() * possible_numbers.length)];
+            let random_number = candidate_numbers[Math.floor(Math.random() * candidate_numbers.length)];
+            if (random_number != undefined) {
+                board.rows[random_row].cells[random_column].innerText = random_number;
+            } else {
+                i--;
+            }
         }
     }
 
