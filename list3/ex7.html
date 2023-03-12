@@ -1,0 +1,99 @@
+<p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas cursus bibendum elit eget bibendum. Etiam dui
+    nisi,
+    fermentum sed euismod sit amet, commodo nec sem. Nulla dignissim mauris in nunc molestie, sed pharetra ex feugiat.
+    Nam
+    blandit velit non nunc pulvinar, ac fermentum justo vehicula. Nunc sapien lacus, convallis ac varius sed,
+    ullamcorper id
+    justo. Praesent varius eleifend odio quis efficitur. Aliquam blandit lobortis maximus.
+</p>
+<p>
+    Sed sit amet ex ligula. Proin et mi ac massa placerat tristique sit amet eu nibh. Etiam nunc nulla, consectetur
+    mollis
+    diam quis, ullamcorper vestibulum urna. Morbi efficitur, libero ut hendrerit placerat, augue velit rutrum sem, sit
+    amet
+    viverra ante turpis eget justo. Maecenas mattis tristique odio eu rutrum. Sed a purus non libero ullamcorper
+    tincidunt.
+    Ut et felis placerat, faucibus lorem sit amet, elementum turpis. Etiam condimentum, tellus ut eleifend euismod,
+    dolor
+    arcu congue libero, condimentum interdum massa tellus sed tellus. Morbi commodo euismod nibh egestas hendrerit.
+</p>
+<p>
+    Quisque ullamcorper ultricies elit, scelerisque bibendum diam viverra vitae. Class aptent taciti sociosqu ad litora
+    torquent per conubia nostra, per inceptos himenaeos. Nullam massa lacus, congue id luctus in, varius ac elit. Donec
+    faucibus sem id erat tristique vestibulum. Phasellus ultrices ut nunc a aliquet. Sed ut dictum justo. Nulla
+    fermentum id
+    quam sed iaculis. Nunc fringilla auctor arcu ac bibendum. Nunc venenatis, est vitae lacinia sagittis, velit felis
+    rhoncus dolor, eu suscipit dolor velit suscipit enim. In feugiat sit amet dolor sit amet ultricies. Suspendisse
+    potenti.
+    Praesent consequat porta sem eget lacinia. Pellentesque vel lectus commodo, porta dui ultrices, ultrices eros. Donec
+    id
+    nibh felis.
+</p>
+<p>
+    Vestibulum sit amet augue ut ex varius fringilla. In congue luctus vulputate. Etiam ultricies tellus quis sagittis
+    tempus. Integer lobortis feugiat neque, in pretium justo. Pellentesque habitant morbi tristique senectus et netus et
+    malesuada fames ac turpis egestas. Ut tincidunt purus et sapien tempus mattis. Praesent pretium quam vitae consequat
+    ornare. Aenean finibus venenatis faucibus. In iaculis condimentum suscipit. Aliquam ac ullamcorper libero.
+    Pellentesque
+    mattis mi erat, malesuada semper ligula pharetra ut. Nunc volutpat sem a massa euismod consectetur. Sed nec nisi
+    velit.
+    Morbi tincidunt sem nec congue lobortis. Pellentesque purus est, sodales ut massa a, pellentesque lacinia diam.
+</p>
+<p>
+    Etiam semper, elit sed vehicula tempus, ex sem sollicitudin mauris, et semper ipsum magna vitae eros. Mauris
+    ultrices
+    sodales diam at consequat. Morbi pharetra ex eu tellus vestibulum sagittis. Sed a maximus diam, eu accumsan dolor.
+    Vestibulum vehicula erat eget aliquet pharetra. Sed vel posuere ex. Sed varius nulla a dapibus facilisis. Mauris
+    hendrerit nulla sed purus ultrices placerat. Fusce ac nunc est. Ut feugiat neque sed quam elementum, pharetra
+    molestie
+    nisl condimentum. Aenean sagittis nisl et erat viverra elementum. Donec sem metus, euismod et pharetra non,
+    fringilla
+    non lectus. Duis vulputate enim mauris, ac euismod ligula sodales ac. In congue odio ut cursus fermentum. Praesent
+    in
+    tincidunt sem, ac fermentum lacus. Curabitur euismod, est non commodo laoreet, ligula orci euismod tellus, sed
+    semper
+    est mauris eget purus.
+</p>
+
+<script>
+    function countWords(element) {
+        let result = new Map();
+        let words = element.textContent.match(/\p{L}*/ug);
+        for (let word of words) {
+            if (word.length > 0) {
+                if (result.has(word)) {
+                    result.set(word, result.get(word) + 1);
+                } else {
+                    result.set(word, 1);
+                }
+            }
+        }
+
+        return new Map([...result.entries()].sort((a, b) => b[1] - a[1]));
+    }
+
+    function showResult(result) {
+        let div = document.createElement("div");
+        div.style.border = "1px solid black";
+        div.style.padding = "10px";
+        div.style.margin = "10px";
+
+        let exit_button = document.createElement("button");
+        exit_button.onclick = () => div.remove();
+        exit_button.textContent = "x";
+        exit_button.style.float = "right";
+
+        div.appendChild(exit_button);
+
+        for (let [word, count] of result) {
+            let s = document.createElement("span");
+            s.textContent = word + ": " + count + " ";
+            div.appendChild(s);
+        }
+        document.body.appendChild(div);
+    }
+
+    showResult(countWords(document.body));
+
+</script>
