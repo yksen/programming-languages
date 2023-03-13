@@ -1,0 +1,217 @@
+<style>
+    td {
+        width: 50px;
+        height: 50px;
+        box-sizing: border-box;
+        border: solid grey 1px;
+        text-align: center;
+        font-size: 30px;
+    }
+
+    select {
+        width: 100%;
+        height: 100%;
+        font-size: 30px;
+    }
+</style>
+
+<button onclick="generateBoard(18)">Generate</button>
+<button onclick="solve()">Solve</button>
+<button onclick="play()">Play</button>
+
+<table></table>
+
+<script>
+    const board = document.querySelector("table");
+    const board_size = 9;
+    createBoard();
+    let moves = [];
+
+    function createBoard() {
+        for (let i = 0; i < board_size; i++) {
+            let tr = document.createElement("tr");
+            for (let j = 0; j < board_size; j++) {
+                let td = document.createElement("td");
+                tr.appendChild(td);
+            }
+            board.appendChild(tr);
+        }
+    }
+
+    function generateBoard(n) {
+        moves = [];
+        for (let i = 0; i < board_size; i++) {
+            for (let j = 0; j < board_size; j++) {
+                board.rows[i].cells[j].innerText = "";
+            }
+        }
+
+        let indices = [...Array(board_size ** 2).keys()];
+        for (let i = 0; i < n; i++) {
+            let candidate_numbers = [...Array(9).keys()].map(x => x + 1);
+
+            let random_index = indices.splice(Math.floor(Math.random() * indices.length), 1)[0];
+            let random_row = Math.floor(random_index / board_size);
+            let random_column = random_index % board_size;
+
+            filterCandidates(random_row, random_column, candidate_numbers);
+
+            let random_number = candidate_numbers[Math.floor(Math.random() * candidate_numbers.length)];
+            if (random_number != undefined) {
+                board.rows[random_row].cells[random_column].innerText = random_number;
+            } else {
+                i--;
+            }
+        }
+    }
+
+    function filterCandidates(row, column, candidates) {
+        filterCandidatesByRow(row, column, candidates);
+        filterCandidatesByColumn(row, column, candidates);
+        filterCandidatesBySquare(row, column, candidates);
+    }
+
+    function filterCandidatesByRow(row, column, candidates) {
+        for (let i = 0; i < board_size; i++) {
+            if (i != column) {
+                let number = board.rows[row].cells[i].innerText;
+                if (number.length != 1)
+                    continue;
+                let index = candidates.indexOf(parseInt(number));
+                if (index != -1)
+                    candidates.splice(index, 1);
+            }
+        }
+    }
+
+    function filterCandidatesByColumn(row, column, candidates) {
+        for (let i = 0; i < board_size; i++) {
+            if (i != row) {
+                let number = board.rows[i].cells[column].innerText;
+                if (number.length != 1)
+                    continue;
+                let index = candidates.indexOf(parseInt(number));
+                if (index != -1)
+                    candidates.splice(index, 1);
+            }
+        }
+    }
+
+    function filterCandidatesBySquare(row, column, candidates) {
+        let square_row = Math.floor(row / 3);
+        let square_column = Math.floor(column / 3);
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                let number = board.rows[square_row * 3 + i].cells[square_column * 3 + j].innerText;
+                if (number.length != 1)
+                    continue;
+                let index = candidates.indexOf(parseInt(number));
+                if (index != -1)
+                    candidates.splice(index, 1);
+            }
+        }
+    }
+
+    function solve() {
+        removeSelects();
+        if (!solveByBacktracking(0, 0))
+            alert("No solutions found");
+        if (moves.length > 0) {
+            moves = [];
+            document.body.lastChild.remove();
+        }
+    }
+
+    function solveByBacktracking(row, column) {
+        if (row == board_size - 1 && column == board_size)
+            return true;
+
+        if (column == board_size) {
+            row++;
+            column = 0;
+        }
+
+        if (board.rows[row].cells[column].innerText != "") {
+            return solveByBacktracking(row, column + 1);
+        }
+
+        for (let number = 1; number <= board_size; number++) {
+            let candidates = [...Array(9).keys()].map(x => x + 1);
+            filterCandidates(row, column, candidates);
+            if (candidates.indexOf(number) > -1) {
+                board.rows[row].cells[column].innerText = number;
+                if (solveByBacktracking(row, column + 1))
+                    return true;
+            }
+            board.rows[row].cells[column].innerText = "";
+        }
+        return false;
+    }
+
+    function play() {
+        for (let i = 0; i < board.rows.length; i++) {
+            for (let j = 0; j < board.rows[i].cells.length; j++) {
+                let cell = board.rows[i].cells[j];
+                if (cell.innerText != "")
+                    continue;
+
+                let candidates = [...Array(9).keys()].map(x => x + 1);
+                filterCandidates(i, j, candidates);
+
+                let select = document.createElement("select");
+                select.onchange = function () {
+                    selectNumber(cell, select.value, i, j);
+                }
+
+                let option = document.createElement("option");
+                option.innerText = "";
+                select.appendChild(option);
+
+                for (let k = 0; k < candidates.length; k++) {
+                    let option = document.createElement("option");
+                    option.innerText = candidates[k];
+                    select.appendChild(option);
+                }
+
+                cell.appendChild(select);
+            }
+        }
+    }
+
+    function selectNumber(cell, number, row, column) {
+        cell.innerText = number;
+        moves.push(row * board_size + column);
+        if (moves.length == 1) {
+            let button = document.createElement("button");
+            button.innerText = "Undo";
+            button.onclick = function () {
+                undoMove();
+            }
+            document.body.appendChild(button);
+        }
+        removeSelects();
+        play();
+    }
+
+    function undoMove() {
+        let last_move = moves.pop();
+        if (moves.length == 0) {
+            document.body.lastChild.remove();
+        }
+        let row = Math.floor(last_move / board_size);
+        let column = last_move % board_size;
+        board.rows[row].cells[column].innerText = "";
+        removeSelects();
+        play();
+    }
+
+    function removeSelects() {
+        for (let i = 0; i < board.rows.length; i++) {
+            for (let j = 0; j < board.rows[i].cells.length; j++) {
+                let cell = board.rows[i].cells[j];
+                if (cell.childElementCount != 0)
+                    cell.firstChild.remove();
+            }
+        }
+    }
+</script>

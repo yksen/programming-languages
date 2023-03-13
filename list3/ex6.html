@@ -1,0 +1,23 @@
+<p>Napisz skrypt, który w każdym słowie treści dokumentu odwróci kolejność liter.</p>
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ornare convallis metus, porttitor semper sem faucibus
+non. Nulla eu dolor elementum, eleifend enim at, volutpat lectus. Quisque neque sapien, semper ac tincidunt eget,
+euismod quis nisi. Cras placerat ante id eleifend sodales. Proin molestie ultricies arcu, eu finibus nibh pulvinar ut.
+Curabitur ligula justo, facilisis eget auctor ac, mollis in ipsum. Proin massa libero, lobortis et ante nec, tincidunt
+scelerisque lorem. Etiam venenatis augue id magna finibus consequat. In ex nisi, tristique elementum diam at, aliquam
+molestie nibh. Proin efficitur nisl non justo rhoncus tempus. Curabitur aliquet augue magna, ut posuere augue luctus ut.
+Cras quis ipsum vel mauris convallis pharetra ac et justo.
+
+<script>
+    document.onclick = () => {
+        reverseText(document.body);
+    }
+
+    function reverseText(element) {
+        if (element.nodeType === Node.TEXT_NODE) {
+            element.textContent = element.textContent.replace(/\p{L}*/ug, word => word.split('').reverse().join(''));
+        } else {
+            element.childNodes.forEach(reverseText);
+        }
+    }
+</script>

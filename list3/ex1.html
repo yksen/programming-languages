@@ -1,0 +1,13 @@
+<input>+<input>=<input>
+<script>
+    function f() {
+        c.value = +a.value + +b.value
+    }
+    function g() {
+        a.value = b.value = c.value / 2
+    }
+
+    let [a, b, c] = document.querySelectorAll('input');
+    a.onkeyup = a.oncut = a.onpaste = b.onkeyup = b.oncut = b.onpaste = () => { setTimeout(f, 0); }
+    c.onkeyup = c.oncut = c.onpaste = () => { setTimeout(g, 0); }
+</script>
