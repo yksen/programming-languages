@@ -113,7 +113,39 @@
     }
 
     function solve() {
+        removeSelects();
+        if (!solveByBacktracking(0, 0))
+            alert("No solutions found");
+        if (moves.length > 0) {
+            moves = [];
+            document.body.lastChild.remove();
+        }
+    }
 
+    function solveByBacktracking(row, column) {
+        if (row == board_size - 1 && column == board_size)
+            return true;
+
+        if (column == board_size) {
+            row++;
+            column = 0;
+        }
+
+        if (board.rows[row].cells[column].innerText != "") {
+            return solveByBacktracking(row, column + 1);
+        }
+
+        for (let number = 1; number <= board_size; number++) {
+            let candidates = [...Array(9).keys()].map(x => x + 1);
+            filterCandidates(row, column, candidates);
+            if (candidates.indexOf(number) > -1) {
+                board.rows[row].cells[column].innerText = number;
+                if (solveByBacktracking(row, column + 1))
+                    return true;
+            }
+            board.rows[row].cells[column].innerText = "";
+        }
+        return false;
     }
 
     function play() {
@@ -164,7 +196,7 @@
     function undoMove() {
         let last_move = moves.pop();
         if (moves.length == 0) {
-            document.body.removeChild(document.body.lastChild);
+            document.body.lastChild.remove();
         }
         let row = Math.floor(last_move / board_size);
         let column = last_move % board_size;
@@ -178,7 +210,7 @@
             for (let j = 0; j < board.rows[i].cells.length; j++) {
                 let cell = board.rows[i].cells[j];
                 if (cell.childElementCount != 0)
-                    cell.removeChild(cell.firstChild);
+                    cell.firstChild.remove();
             }
         }
     }
