@@ -1,6 +1,5 @@
 const http = require("http");
 const fs = require("fs");
-const { userInfo } = require("os");
 
 const PORT = 8080;
 
