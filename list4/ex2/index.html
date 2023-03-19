@@ -1,0 +1,69 @@
+<html>
+<meta charset="utf-8" />
+
+<head>
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+	<div style="float: left;">
+		<h3>Chat</h3>
+		<input type="text" id="txtmessage" />
+		<ul id="messages"></ul>
+		<button id="reset">Reset</button>
+	</div>
+	<div style="float: left; margin-left: 20px;">
+		<h3>Lista użytkowników</h3>
+		<ul id="users"></ul>
+	</div>
+</body>
+
+<script>
+	var nick = prompt("Podaj swój nick");
+
+	var userListInJSON = false;
+	var socket = io();
+	var messages = document.getElementById("messages");
+	var reset_button = document.getElementById("reset");
+	var msg_input = document.getElementById("txtmessage");
+
+	msg_input.focus();
+
+	socket.on("id", function (data) {
+		socket.id = data;
+	});
+
+	socket.emit("nick", nick);
+
+	socket.on("chat message", function (data) {
+		messages.innerHTML += "<li>" + data + "</li>";
+	});
+
+	socket.on("reset", function (msg) {
+		messages.innerHTML = "<li>" + msg + "</li>";
+	});
+
+	socket.on("user list", function (data) {
+		var users = document.getElementById("users");
+		users.innerHTML = "";
+
+		if (userListInJSON) {
+			for (let user of JSON.parse(data)) {
+				users.innerHTML += "<li>" + user.nick + "</li>";
+			}
+		} else
+			users.innerHTML = data;
+	});
+
+	msg_input.addEventListener("change", function () {
+		socket.emit("chat message", "<b>" + nick + ":</b> " + this.value);
+		this.value = "";
+	});
+
+	reset_button.addEventListener("click", function () {
+		socket.emit("reset", "Witaj");
+	});
+
+</script>
+
+</html>
