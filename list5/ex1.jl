@@ -1,43 +1,27 @@
-struct Dot
-    x::Float64
-    y::Float64
+struct Person
+    firstName::String
+    lastName::String
 end
 
-struct Circle
-    center::Dot
-    radius::Float64
-end
+people = [
+    Person("Jan", "Kowalski"),
+    Person("Ewa", "Nowak"),
+    Person("Artur", "Kowalski"),
+    Person("Adam", "Nowak"),
+]
 
-struct Rectangle
-    center::Dot
-    width::Float64
-    height::Float64
-end
+println("(a)")
+println(sort(people, by = p -> (p.firstName)))
+println(sort(people, by = p -> (p.firstName), rev = true))
 
-area(d::Dot) = 0
-area(c::Circle) = pi * c.radius^2
-area(r::Rectangle) = r.width * r.height
+println("(b)")
+println(sort(people, lt = (p1, p2) -> p1.firstName < p2.firstName))
+println(sort(people, lt = (p1, p2) -> p1.firstName > p2.firstName))
 
-distance(d1::Dot, d2::Dot) = sqrt((d1.x - d2.x)^2 + (d1.y - d2.y)^2)
-distance(d::Dot, c::Circle) = distance(d, c.center) - c.radius
-function distance(d::Dot, r::Rectangle)
-    horizontalDistance = abs(d.x - r.center.x) - r.width / 2
-    verticalDistance = abs(d.y - r.center.y) - r.height / 2 
-    if horizontalDistance <= 0
-        return verticalDistance
-    elseif verticalDistance <= 0
-        return horizontalDistance
-    else
-        return sqrt(horizontalDistance^2 + verticalDistance^2)
-    end
-end
+println("(c)")
+println(sort(people, by = p -> (p.lastName, p.firstName)))
+println(sort(people, by = p -> (p.lastName, p.firstName), rev = true))
 
-distance(c1::Circle, c2::Circle) = distance(c1.center, c2.center) - c1.radius - c2.radius
-distance(c::Circle, d::Dot) = distance(d, c)
-distance(c::Circle, r::Rectangle) = 
-
-distance(r1::Rectangle, r2::Rectangle) = distance(r1.center, r2)
-distance(r::Rectangle, d::Dot) = distance(d, r)
-# distance(r::Rectangle, c::Circle) = distance(c, r)
-
-println(distance(Rectangle(Dot(0, 0), 2, 2), Rectangle(Dot(3, 3), 2, 2)))
+println("(d)")
+println(sort(people, lt = (p1, p2) -> p1.lastName < p2.lastName || (p1.lastName == p2.lastName && p1.firstName < p2.firstName)))
+println(sort(people, lt = (p1, p2) -> p1.lastName > p2.lastName || (p1.lastName == p2.lastName && p1.firstName > p2.firstName)))
