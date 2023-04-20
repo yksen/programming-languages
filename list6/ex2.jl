@@ -2,21 +2,30 @@ using Test
 
 simplify(n::Union{Number,Symbol}) = n
 function simplify(e::Expr)
-    args = map(simplify, e.args)
+    args = e.args[2:end]
+    args = map(simplify, args)
     op = e.args[1]
     if op == :+
-        args = filter(x -> x != 0, args)
-        if length(args) == 0
-            return 0
+        s = sum(filter(x -> x isa Number, args))
+        symbols = filter(x -> !(x isa Number), args)
+        if s == 0 && length(symbols) == 1
+            return :($args)
+        elseif s != 0 && length(symbols) == 0
+            return :($s)
+        elseif s != 0 && length(symbols) > 0
+            return Expr(:call, :+, symbols..., s)
+        else
+            return Expr(:call, :+, symbols...)
         end
-        return foldl(+, args[2:end])
     end
     if op == :*
-        args = filter(x -> x != 1, args)
-        if length(args) == 0
-            return 1
+        p = prod(filter(x -> x isa Number, args))
+        symbols = filter(x -> !(x isa Number), args)
+        if p == 0
+            return :($p)
+        else
+            return Expr(:call, :*, symbols...,  p)
         end
-        return foldl(*, args[2:end])
     end
 end
 
