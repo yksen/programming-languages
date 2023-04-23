@@ -1,32 +1,48 @@
 using Test
 
 simplify(n::Union{Number,Symbol}) = n
-function simplify(e::Expr)
-    args = e.args[2:end]
-    args = map(simplify, args)
-    op = e.args[1]
-    if op == :+
-        s = sum(filter(x -> x isa Number, args))
-        symbols = filter(x -> !(x isa Number), args)
-        if s == 0 && length(symbols) == 1
-            return :($args)
-        elseif s != 0 && length(symbols) == 0
-            return :($s)
-        elseif s != 0 && length(symbols) > 0
-            return Expr(:call, :+, symbols..., s)
-        else
-            return Expr(:call, :+, symbols...)
+function simplify(expr::Expr)
+    if expr.head == :call
+        args = simplify.(expr.args[2:end])
+        operator = expr.args[1]
+
+        if operator == :+
+            numbersSum = sum([arg for arg in args if isa(arg, Number)])
+            nonNumbers = filter(x -> !isa(x, Number), args)
+
+            if numbersSum != 0
+                push!(nonNumbers, numbersSum)
+            end
+
+            if length(nonNumbers) == 1
+                return nonNumbers[1]
+            elseif isempty(nonNumbers)
+                return 0
+            else
+                return Expr(:call, :+, nonNumbers...)
+            end
+
+        elseif operator == :*
+            numbersProduct = prod([arg for arg in args if isa(arg, Number)])
+            nonNumbers = filter(x -> !isa(x, Number), args)
+
+            if numbersProduct == 0
+                return 0
+            elseif numbersProduct != 1
+                push!(nonNumbers, numbersProduct)
+            end
+
+            if length(nonNumbers) == 1
+                return nonNumbers[1]
+            elseif isempty(nonNumbers)
+                return 1
+            else
+                return Expr(:call, :*, nonNumbers...)
+            end
         end
     end
-    if op == :*
-        p = prod(filter(x -> x isa Number, args))
-        symbols = filter(x -> !(x isa Number), args)
-        if p == 0
-            return :($p)
-        else
-            return Expr(:call, :*, symbols...,  p)
-        end
-    end
+
+    return expr
 end
 
 @test simplify(1 + 2) == 3
