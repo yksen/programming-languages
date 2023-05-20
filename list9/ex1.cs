@@ -1,85 +1,110 @@
 ﻿namespace ex1
 {
-    public class ObserverEventArgs : EventArgs
-    {
-        public string name;
-        public double x;
-        public double y;
-
-        public ObserverEventArgs(string name, double x, double y)
-        {
-            this.name = name;
-            this.x = x;
-            this.y = y;
-        }
-    }
-
     public class Observer
     {
-        public string name;
-        public double x;
-        public double y;
-        private List<Observer> neighbors = new List<Observer>();
+        public string Name { get; }
+        public double X { get; }
+        public double Y { get; }
+        private Observer[] neighbors;
 
         public Observer(string name, double x, double y)
         {
-            this.name = name;
-            this.x = x;
-            this.y = y;
+            Name = name;
+            X = x;
+            Y = y;
+            neighbors = new Observer[2];
         }
 
-        public void NewObserver(object creator, ObserverEventArgs e)
+        public void UpdateNeighbors(Observer observer)
         {
-            Observer observer = new Observer(e.name, e.x, e.y);
-            neighbors.Add(observer);
-        }
-
-        public void Print(object creator)
-        {
-            neighbors.Sort((a, b) =>
-                Math.Sqrt(Math.Pow(a.x - x, 2) + Math.Pow(a.y - y, 2))
-                .CompareTo(Math.Sqrt(Math.Pow(b.x - x, 2) + Math.Pow(b.y - y, 2))));
-            Console.WriteLine("Observer: " + name);
-            for (int i = 0; i < Math.Min(2, neighbors.Count); i++)
+            if (neighbors[0] == null)
             {
-                Console.WriteLine(neighbors[i].name + " x = " + neighbors[i].x + " y = " + neighbors[i].y +
-                " distance = " + Math.Sqrt(Math.Pow(neighbors[i].x - x, 2) + Math.Pow(neighbors[i].y - y, 2)));
+                neighbors[0] = observer;
             }
+            else if (neighbors[1] == null)
+            {
+                neighbors[1] = observer;
+            }
+            else
+            {
+                double distance1 = CalculateDistance(neighbors[0]);
+                double distance2 = CalculateDistance(neighbors[1]);
+                if (distance1 > distance2)
+                {
+                    neighbors[0] = observer;
+                }
+                else
+                {
+                    neighbors[1] = observer;
+                }
+            }
+        }
 
+        private double CalculateDistance(Observer other)
+        {
+            return Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
+        }
+
+        public void PrintNeighbors()
+        {
+            Console.WriteLine($"Neighbors of {Name}:");
+            foreach (Observer neighbor in neighbors)
+            {
+                if (neighbor != null)
+                {
+                    Console.WriteLine($"{neighbor.Name} ({neighbor.X,0:F3}, {neighbor.Y,0:F3}) Distance: {CalculateDistance(neighbor),0:F3}");
+                }
+            }
         }
     }
 
     public class Creator
     {
-        private static Random random = new Random();
-        private int id = 0;
-        public delegate void NewObserverHandler(object creator, ObserverEventArgs e);
-        public delegate void PrintHandler(object creator);
+        private Random random;
+        private uint id;
+        private List<Observer> observers;
 
-        public NewObserverHandler NewObserver;
-        public PrintHandler Print;
+        public delegate void CreateObserverHandler(Observer observer);
+        public CreateObserverHandler? OnCreateObserver;
+
+        public delegate void PrintNeighborsHandler();
+        public PrintNeighborsHandler? OnPrintNeighbors;
+
+        public Creator()
+        {
+            random = new Random();
+            id = 0;
+            observers = new List<Observer>();
+        }
 
         public void CreateObserver()
         {
-            Observer observer = new Observer("Observer" + id++, random.NextDouble(), random.NextDouble());
-            NewObserver += observer.NewObserver;
+            string name = $"Observer {id++}";
+            double x = random.NextDouble();
+            double y = random.NextDouble();
+            Observer observer = new Observer(name, x, y);
+            observers.Add(observer);
+            OnCreateObserver?.Invoke(observer);
+            OnCreateObserver += observer.UpdateNeighbors;
+            OnPrintNeighbors += observer.PrintNeighbors;
         }
 
-        public void PrintObservers()
+        public void PrintNeighbors()
         {
-            Print(this);
+            OnPrintNeighbors?.Invoke();
         }
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main(string[] args)
         {
             Creator creator = new Creator();
             for (int i = 0; i < 5; i++)
             {
                 creator.CreateObserver();
-                creator.PrintObservers();
+                creator.PrintNeighbors();
+                Console.WriteLine();
             }
         }
     }
