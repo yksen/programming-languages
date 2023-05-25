@@ -21,21 +21,26 @@
             {
                 neighbors[0] = observer;
             }
-            else if (neighbors[1] == null)
-            {
-                neighbors[1] = observer;
-            }
             else
             {
-                double distance1 = CalculateDistance(neighbors[0]);
-                double distance2 = CalculateDistance(neighbors[1]);
-                if (distance1 > distance2)
+                if (neighbors[1] == null)
                 {
-                    neighbors[0] = observer;
+                    neighbors[1] = observer;
                 }
                 else
                 {
-                    neighbors[1] = observer;
+                    double largestDistance = CalculateDistance(neighbors[1]);
+                    double newDistance = CalculateDistance(observer);
+                    if (newDistance < largestDistance)
+                    {
+                        neighbors[1] = observer;
+                    }
+                }
+                if (CalculateDistance(neighbors[1]) < CalculateDistance(neighbors[0]))
+                {
+                    Observer toSwap = neighbors[0];
+                    neighbors[0] = neighbors[1];
+                    neighbors[1] = toSwap;
                 }
             }
         }
@@ -62,7 +67,6 @@
     {
         private Random random;
         private uint id;
-        private List<Observer> observers;
 
         public delegate void CreateObserverHandler(Observer observer);
         public CreateObserverHandler? OnCreateObserver;
@@ -74,7 +78,6 @@
         {
             random = new Random();
             id = 0;
-            observers = new List<Observer>();
         }
 
         public void CreateObserver()
@@ -83,7 +86,6 @@
             double x = random.NextDouble();
             double y = random.NextDouble();
             Observer observer = new Observer(name, x, y);
-            observers.Add(observer);
             OnCreateObserver?.Invoke(observer);
             OnCreateObserver += observer.UpdateNeighbors;
             OnPrintNeighbors += observer.PrintNeighbors;
