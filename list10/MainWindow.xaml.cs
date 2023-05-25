@@ -15,14 +15,56 @@ using System.Windows.Shapes;
 
 namespace list10
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void RemoveEdgeButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void HideVertexButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ShowVertexButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ChangeColorButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
+        private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
+        private void Canvas_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
+        private void Canvas_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+
         }
     }
 }
