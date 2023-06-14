@@ -13,6 +13,19 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+// Napisz program, który będzie wyświetlał graf prosty o maksymalnie 10 wierzchołkach. Wierzchołki
+// grafu to koła, które posiadają numery od 1 do 10, są ustalonej wielkości i mają zadany kolor, który
+// można zmienić, klikając prawym klawiszem myszy nad kołem. Wierzchołki połączone są
+// krawędziami (grubymi liniami), początkowo graf jest cykliczny. Przyciskając odpowiednie przyciski
+// można dodać i usunąć krawędź między wybranymi widocznymi wierzchołkami. Dowolny
+// wierzchołek (wraz ze wszystkimi krawędziami z niego wychodzącymi) można ukryć, klikając nad
+// nim prawym klawiszem myszy. Ukryty wierzchołek można wyświetlić używając odpowiedniego
+// przycisku. Klikając lewym klawiszem myszy nad wierzchołkiem i przesuwając mysz trzymając
+// wciśnięty klawisz, wierzchołek ten można przemieścić do miejsca, w którym klawisz myszy zostanie
+// puszczony. Każda krawędź grafu łącząca dwa wierzchołki o zadanych kolorach powinny mieć kolor
+// przechodzący z jednego w drugi w sposób ciągły. Miło byłoby, gdyby na pasku tytułu okna aplikacji
+// wyświetlana była unikatowa ikonka programu oraz jego nazwa.
+
 namespace list10
 {
     // <summary>
@@ -23,10 +36,10 @@ namespace list10
         public MainWindow()
         {
             InitializeComponent();
-            drawGraph();
+            DrawGraph();
         }
 
-        private void drawGraph()
+        private void DrawGraph()
         {
             uint n = 10;
             double r = 100;
@@ -39,25 +52,43 @@ namespace list10
             {
                 x = x0 + r * Math.Cos(i * alpha);
                 y = y0 + r * Math.Sin(i * alpha);
-                drawVertex(i + 1, x, y);
+                DrawVertex(i + 1, x, y);
             }
         }
 
-        private void drawVertex(uint number, double x, double y)
+        private void DrawVertex(uint number, double x, double y, uint size = 50, Brush? color = null)
         {
-            Ellipse ellipse = new Ellipse();
-            ellipse.Width = 50;
-            ellipse.Height = 50;
-            ellipse.Fill = Brushes.Red;
-            ellipse.Stroke = Brushes.Black;
-            ellipse.StrokeThickness = 2;
+            if (color == null)
+            {
+                color = Brushes.Turquoise;
+            }
+            Grid grid = new()
+            {
+                Width = 50,
+                Height = 50,
+            };
+            Ellipse ellipse = new()
+            {
+                Fill = color,
+                Stroke = Brushes.Black,
+                StrokeThickness = 2,
+            };
+            Label label = new()
+            {
+                FontSize = 20,
+                Content = number,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             ellipse.MouseDown += Canvas_MouseLeftButtonDown;
             ellipse.MouseUp += Canvas_MouseLeftButtonUp;
             ellipse.MouseRightButtonDown += Canvas_MouseRightButtonDown;
             ellipse.MouseRightButtonUp += Canvas_MouseRightButtonUp;
-            Canvas.SetLeft(ellipse, x);
-            Canvas.SetTop(ellipse, y);
-            canvas.Children.Add(ellipse);
+            grid.Children.Add(ellipse);
+            grid.Children.Add(label);
+            Canvas.SetLeft(grid, x - grid.Width / 2);
+            Canvas.SetTop(grid, y - grid.Height / 2);
+            canvas.Children.Add(grid);
         }
 
         private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
