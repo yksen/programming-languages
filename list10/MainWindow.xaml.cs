@@ -70,10 +70,8 @@ namespace GraphApp
 
             for (int i = 0; i < MaxVertices; i++)
             {
-                int previousIndex = (i - 1 + MaxVertices) % MaxVertices;
                 int nextIndex = (i + 1) % MaxVertices;
 
-                Ellipse previousVertex = (Ellipse)vertices[previousIndex];
                 Ellipse currentVertex = (Ellipse)vertices[i];
                 Ellipse nextVertex = (Ellipse)vertices[nextIndex];
 
@@ -84,7 +82,7 @@ namespace GraphApp
                     X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2,
                     Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2,
                     StrokeThickness = 5,
-                    Stroke = GenerateGradientBrush(currentVertex.Fill, nextVertex.Fill)
+                    Stroke = GenerateGradientBrush(currentVertex, nextVertex)
                 };
 
                 Edge edge = new Edge(currentVertex, nextVertex, line);
@@ -95,8 +93,20 @@ namespace GraphApp
             }
         }
 
-        private LinearGradientBrush GenerateGradientBrush(Brush startColor, Brush endColor)
+        private LinearGradientBrush GenerateGradientBrush(Ellipse startVertex, Ellipse endVertex)
         {
+            Brush startColor = startVertex.Fill;
+            Brush endColor = endVertex.Fill;
+
+            Point startPoint = new Point(
+                (Canvas.GetLeft(startVertex) + startVertex.Width / 2) / canvas.ActualWidth,
+                (Canvas.GetTop(startVertex) + startVertex.Height / 2) / canvas.ActualHeight
+            );
+            Point endPoint = new Point(
+                (Canvas.GetLeft(endVertex) + endVertex.Width / 2) / canvas.ActualWidth,
+                (Canvas.GetTop(endVertex) + endVertex.Height / 2) / canvas.ActualHeight
+            );
+
             GradientStopCollection gradientStops = new GradientStopCollection
             {
                 new GradientStop(((SolidColorBrush)startColor).Color, 0),
@@ -105,8 +115,8 @@ namespace GraphApp
 
             LinearGradientBrush gradientBrush = new LinearGradientBrush(gradientStops)
             {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(1, 1)
+                StartPoint = startPoint,
+                EndPoint = endPoint
             };
 
             return gradientBrush;
@@ -219,7 +229,7 @@ namespace GraphApp
                 line.X2 = endX;
                 line.Y2 = endY;
 
-                line.Stroke = GenerateGradientBrush(startVertex.Fill, endVertex.Fill);
+                line.Stroke = GenerateGradientBrush(startVertex, endVertex);
             }
         }
 
@@ -269,7 +279,7 @@ namespace GraphApp
             if (selectedVertex == null || targetVertex == null || selectedVertex == targetVertex ||
                 selectedVertex.Opacity < 1 || targetVertex.Opacity < 1)
                 return;
-            
+
             bool doesEdgeExist = false;
             foreach (Edge edge in edges[vertices.IndexOf(selectedVertex)])
             {
@@ -290,7 +300,7 @@ namespace GraphApp
                 X2 = Canvas.GetLeft(targetVertex) + targetVertex.Width / 2,
                 Y2 = Canvas.GetTop(targetVertex) + targetVertex.Height / 2,
                 StrokeThickness = 5,
-                Stroke = GenerateGradientBrush(selectedVertex.Fill, targetVertex.Fill)
+                Stroke = GenerateGradientBrush(selectedVertex, targetVertex)
             };
 
             Edge newEdge = new Edge(selectedVertex, targetVertex, line);
