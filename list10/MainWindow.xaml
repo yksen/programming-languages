@@ -1,0 +1,26 @@
+﻿<Window x:Class="GraphApp.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Graph App">
+    <Grid>
+        <Canvas x:Name="canvas" Background="White" MouseDown="Canvas_MouseDown"
+            MouseUp="Canvas_MouseUp" MouseMove="Canvas_MouseMove">
+        </Canvas>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left"
+            VerticalAlignment="Top">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10" />
+                </Style>
+            </StackPanel.Resources>
+            <Button x:Name="addEdgeButton" Content="Add Edge" Click="AddEdgeButton_Click"
+                Width="100" />
+            <Button x:Name="removeEdgeButton" Content="Remove Edge" Click="RemoveEdgeButton_Click"
+                Width="100" />
+            <Button x:Name="hideVertexButton" Content="Hide Vertex" Click="HideVertexButton_Click"
+                Width="100" />
+            <Button x:Name="showVertexButton" Content="Show Vertex" Click="ShowVertexButton_Click"
+                Width="100" />
+        </StackPanel>
+    </Grid>
+</Window>
