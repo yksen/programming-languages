@@ -11,8 +11,8 @@ namespace GraphApp
     public partial class MainWindow : Window
     {
         private const int MaxVertices = 10;
-        private List<UIElement> vertices = new List<UIElement>();
-        private List<Line> edges = new List<Line>();
+        private List<Ellipse> vertices = new List<Ellipse>();
+        private List<List<Edge>> edges = new List<List<Edge>>();
         private Ellipse? selectedVertex = null;
         private bool isDragging = false;
         private Point offset;
@@ -64,27 +64,33 @@ namespace GraphApp
         {
             for (int i = 0; i < MaxVertices; i++)
             {
+                edges.Add(new List<Edge>());
+            }
+
+            for (int i = 0; i < MaxVertices; i++)
+            {
+                int previousIndex = (i - 1 + MaxVertices) % MaxVertices;
                 int nextIndex = (i + 1) % MaxVertices;
+
+                Ellipse previousVertex = (Ellipse)vertices[previousIndex];
                 Ellipse currentVertex = (Ellipse)vertices[i];
                 Ellipse nextVertex = (Ellipse)vertices[nextIndex];
 
-                double currentLeft = Canvas.GetLeft(currentVertex);
-                double currentTop = Canvas.GetTop(currentVertex);
-                double nextLeft = Canvas.GetLeft(nextVertex);
-                double nextTop = Canvas.GetTop(nextVertex);
-
-                Line edge = new Line
+                Line line = new Line
                 {
-                    X1 = currentLeft + currentVertex.Width / 2,
-                    Y1 = currentTop + currentVertex.Height / 2,
-                    X2 = nextLeft + nextVertex.Width / 2,
-                    Y2 = nextTop + nextVertex.Height / 2,
+                    X1 = Canvas.GetLeft(currentVertex) + currentVertex.Width / 2,
+                    Y1 = Canvas.GetTop(currentVertex) + currentVertex.Height / 2,
+                    X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2,
+                    Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2,
                     StrokeThickness = 5,
                     Stroke = GenerateGradientBrush(currentVertex.Fill, nextVertex.Fill)
                 };
 
-                canvas.Children.Insert(0, edge);
-                edges.Add(edge);
+                Edge edge = new Edge(currentVertex, nextVertex, line);
+                canvas.Children.Insert(0, line);
+
+                edges[i].Add(edge);
+                edges[nextIndex].Add(edge);
             }
         }
 
@@ -126,7 +132,10 @@ namespace GraphApp
         {
             if (!isDragging)
             {
+                if (selectedVertex != null)
+                    selectedVertex.Stroke = Brushes.Black;
                 selectedVertex = (Ellipse)sender;
+                selectedVertex.Stroke = Brushes.Red;
                 offset = e.GetPosition(selectedVertex);
                 selectedVertex.CaptureMouse();
                 isDragging = true;
@@ -184,26 +193,26 @@ namespace GraphApp
         private void UpdateEdges(Ellipse vertex)
         {
             int vertexIndex = vertices.IndexOf(vertex);
-            int nextIndex = (vertexIndex + 1) % MaxVertices;
-            int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
+            List<Edge> vertexEdges = edges[vertexIndex];
 
-            Ellipse nextVertex = (Ellipse)vertices[nextIndex];
-            Ellipse previousVertex = (Ellipse)vertices[previousIndex];
+            foreach (Edge edge in vertexEdges)
+            {
+                Ellipse startVertex = edge.StartVertex;
+                Ellipse endVertex = edge.EndVertex;
+                Line line = edge.Line;
 
-            Line outgoingEdge = edges[vertexIndex];
-            Line incomingEdge = edges[previousIndex];
+                double startX = Canvas.GetLeft(startVertex) + startVertex.Width / 2;
+                double startY = Canvas.GetTop(startVertex) + startVertex.Height / 2;
+                double endX = Canvas.GetLeft(endVertex) + endVertex.Width / 2;
+                double endY = Canvas.GetTop(endVertex) + endVertex.Height / 2;
 
-            outgoingEdge.X1 = Canvas.GetLeft(vertex) + vertex.Width / 2;
-            outgoingEdge.Y1 = Canvas.GetTop(vertex) + vertex.Height / 2;
-            outgoingEdge.X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2;
-            outgoingEdge.Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2;
+                line.X1 = startX;
+                line.Y1 = startY;
+                line.X2 = endX;
+                line.Y2 = endY;
 
-            incomingEdge.X2 = Canvas.GetLeft(vertex) + vertex.Width / 2;
-            incomingEdge.Y2 = Canvas.GetTop(vertex) + vertex.Height / 2;
-
-            LinearGradientBrush brush = GenerateGradientBrush(previousVertex.Fill, vertex.Fill);
-            outgoingEdge.Stroke = brush;
-            incomingEdge.Stroke = brush;
+                line.Stroke = GenerateGradientBrush(startVertex.Fill, endVertex.Fill);
+            }
         }
 
         private void HideVertexButton_Click(object sender, RoutedEventArgs e)
@@ -227,84 +236,81 @@ namespace GraphApp
         private void HideConnectedEdges(Ellipse vertex)
         {
             int vertexIndex = vertices.IndexOf(vertex);
-            int nextIndex = (vertexIndex + 1) % MaxVertices;
-            int previousIndex = (vertexIndex - 1 + MaxVertices) % MaxVertices;
+            List<Edge> vertexEdges = edges[vertexIndex];
 
-            Line outgoingEdge = edges[vertexIndex];
-            Line incomingEdge = edges[previousIndex];
-
-            outgoingEdge.Visibility = Visibility.Hidden;
-            incomingEdge.Visibility = Visibility.Hidden;
+            foreach (Edge edge in vertexEdges)
+            {
+                edge.Line.Visibility = Visibility.Hidden;
+            }
         }
 
         private void ShowConnectedEdges(Ellipse vertex)
         {
             int vertexIndex = vertices.IndexOf(vertex);
-            int nextIndex = (vertexIndex + 1) % MaxVertices;
-            int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
+            List<Edge> vertexEdges = edges[vertexIndex];
 
-            Line outgoingEdge = edges[vertexIndex];
-            Line incomingEdge = edges[previousIndex];
-
-            outgoingEdge.Visibility = Visibility.Visible;
-            incomingEdge.Visibility = Visibility.Visible;
+            foreach (Edge edge in vertexEdges)
+            {
+                edge.Line.Visibility = Visibility.Visible;
+            }
         }
 
         private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (selectedVertex != null)
-            {
-                int vertexIndex = vertices.IndexOf(selectedVertex);
-                int nextIndex = (vertexIndex + 1) % MaxVertices;
-                Ellipse nextVertex = (Ellipse)vertices[nextIndex];
+            // if (selectedVertex != null)
+            // {
+            //     int vertexIndex = vertices.IndexOf(selectedVertex);
+            //     int nextIndex = (vertexIndex + 1) % MaxVertices;
+            //     Ellipse nextVertex = (Ellipse)vertices[nextIndex];
 
-                Line newEdge = new Line
-                {
-                    X1 = Canvas.GetLeft(selectedVertex) + selectedVertex.Width / 2,
-                    Y1 = Canvas.GetTop(selectedVertex) + selectedVertex.Height / 2,
-                    X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2,
-                    Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2,
-                    StrokeThickness = 5,
-                    Stroke = GenerateGradientBrush(selectedVertex.Fill, nextVertex.Fill)
-                };
+            //     Line newEdge = new Line
+            //     {
+            //         X1 = Canvas.GetLeft(selectedVertex) + selectedVertex.Width / 2,
+            //         Y1 = Canvas.GetTop(selectedVertex) + selectedVertex.Height / 2,
+            //         X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2,
+            //         Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2,
+            //         StrokeThickness = 5,
+            //         Stroke = GenerateGradientBrush(selectedVertex.Fill, nextVertex.Fill)
+            //     };
 
-                edges.Insert(vertexIndex, newEdge);
-                canvas.Children.Insert(0, newEdge);
+            //     edges.Insert(vertexIndex, newEdge);
+            //     canvas.Children.Insert(0, newEdge);
 
-                UpdateEdgeIndices();
-            }
+            //     UpdateEdgeIndices();
+            // }
         }
 
         private void RemoveEdgeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (selectedVertex != null)
-            {
-                int vertexIndex = vertices.IndexOf(selectedVertex);
-                int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
+            // if (selectedVertex != null)
+            // {
+            //     int vertexIndex = vertices.IndexOf(selectedVertex);
+            //     int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
 
-                Line outgoingEdge = edges[vertexIndex];
-                Line incomingEdge = edges[previousIndex];
+            //     Line outgoingEdge = edges[vertexIndex];
+            //     Line incomingEdge = edges[previousIndex];
 
-                canvas.Children.Remove(outgoingEdge);
-                canvas.Children.Remove(incomingEdge);
-                edges.Remove(outgoingEdge);
-                edges.Remove(incomingEdge);
+            //     canvas.Children.Remove(outgoingEdge);
+            //     canvas.Children.Remove(incomingEdge);
+            //     edges.Remove(outgoingEdge);
+            //     edges.Remove(incomingEdge);
 
-                UpdateEdgeIndices();
-            }
+            //     UpdateEdgeIndices();
+            // }
         }
+    }
 
-        private void UpdateEdgeIndices()
+    public class Edge
+    {
+        public Ellipse StartVertex { get; set; }
+        public Ellipse EndVertex { get; set; }
+        public Line Line { get; set; }
+
+        public Edge(Ellipse startVertex, Ellipse endVertex, Line line)
         {
-            for (int i = 0; i < edges.Count; i++)
-            {
-                Line edge = edges[i];
-                Ellipse vertex = (Ellipse)vertices[i];
-                int nextIndex = (i + 1) % MaxVertices;
-                Ellipse nextVertex = (Ellipse)vertices[nextIndex];
-
-                edge.Stroke = GenerateGradientBrush(vertex.Fill, nextVertex.Fill);
-            }
+            StartVertex = startVertex;
+            EndVertex = endVertex;
+            Line = line;
         }
     }
 }
