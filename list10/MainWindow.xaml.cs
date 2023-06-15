@@ -14,6 +14,7 @@ namespace GraphApp
         private List<Ellipse> vertices = new List<Ellipse>();
         private List<List<Edge>> edges = new List<List<Edge>>();
         private Ellipse? selectedVertex = null;
+        private Ellipse? targetVertex = null;
         private bool isDragging = false;
         private Point offset;
 
@@ -130,7 +131,14 @@ namespace GraphApp
 
         private void Vertex_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (!isDragging)
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                if (targetVertex != null)
+                    targetVertex.Stroke = Brushes.Black;
+                targetVertex = (Ellipse)sender;
+                targetVertex.Stroke = Brushes.Orange;
+            }
+            else if (!isDragging)
             {
                 if (selectedVertex != null)
                     selectedVertex.Stroke = Brushes.Black;
@@ -153,7 +161,7 @@ namespace GraphApp
 
         private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left && selectedVertex != null)
+            if (e.ChangedButton == MouseButton.Left && selectedVertex != null && Keyboard.Modifiers != ModifierKeys.Control)
             {
                 Point currentPosition = e.GetPosition(canvas);
                 double newX = currentPosition.X - offset.X;
@@ -257,46 +265,30 @@ namespace GraphApp
 
         private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
         {
-            // if (selectedVertex != null)
-            // {
-            //     int vertexIndex = vertices.IndexOf(selectedVertex);
-            //     int nextIndex = (vertexIndex + 1) % MaxVertices;
-            //     Ellipse nextVertex = (Ellipse)vertices[nextIndex];
+            if (selectedVertex == null || targetVertex == null)
+                return;
+                
+            Line line = new Line
+            {
+                X1 = Canvas.GetLeft(selectedVertex) + selectedVertex.Width / 2,
+                Y1 = Canvas.GetTop(selectedVertex) + selectedVertex.Height / 2,
+                X2 = Canvas.GetLeft(targetVertex) + targetVertex.Width / 2,
+                Y2 = Canvas.GetTop(targetVertex) + targetVertex.Height / 2,
+                StrokeThickness = 5,
+                Stroke = GenerateGradientBrush(selectedVertex.Fill, targetVertex.Fill)
+            };
 
-            //     Line newEdge = new Line
-            //     {
-            //         X1 = Canvas.GetLeft(selectedVertex) + selectedVertex.Width / 2,
-            //         Y1 = Canvas.GetTop(selectedVertex) + selectedVertex.Height / 2,
-            //         X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2,
-            //         Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2,
-            //         StrokeThickness = 5,
-            //         Stroke = GenerateGradientBrush(selectedVertex.Fill, nextVertex.Fill)
-            //     };
+            Edge edge = new Edge(selectedVertex, targetVertex, line);
+            canvas.Children.Insert(0, edge.Line);
 
-            //     edges.Insert(vertexIndex, newEdge);
-            //     canvas.Children.Insert(0, newEdge);
+            edges[vertices.IndexOf(selectedVertex)].Add(edge);
+            edges[vertices.IndexOf(targetVertex)].Add(edge);
 
-            //     UpdateEdgeIndices();
-            // }
+            UpdateEdges(selectedVertex);
         }
 
         private void RemoveEdgeButton_Click(object sender, RoutedEventArgs e)
         {
-            // if (selectedVertex != null)
-            // {
-            //     int vertexIndex = vertices.IndexOf(selectedVertex);
-            //     int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
-
-            //     Line outgoingEdge = edges[vertexIndex];
-            //     Line incomingEdge = edges[previousIndex];
-
-            //     canvas.Children.Remove(outgoingEdge);
-            //     canvas.Children.Remove(incomingEdge);
-            //     edges.Remove(outgoingEdge);
-            //     edges.Remove(incomingEdge);
-
-            //     UpdateEdgeIndices();
-            // }
         }
     }
 
