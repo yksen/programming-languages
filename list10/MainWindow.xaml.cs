@@ -259,15 +259,30 @@ namespace GraphApp
 
             foreach (Edge edge in vertexEdges)
             {
-                edge.Line.Visibility = Visibility.Visible;
+                if (edge.StartVertex.Opacity == 1 && edge.EndVertex.Opacity == 1)
+                    edge.Line.Visibility = Visibility.Visible;
             }
         }
 
         private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (selectedVertex == null || targetVertex == null)
+            if (selectedVertex == null || targetVertex == null || selectedVertex == targetVertex ||
+                selectedVertex.Opacity < 1 || targetVertex.Opacity < 1)
                 return;
-                
+            
+            bool doesEdgeExist = false;
+            foreach (Edge edge in edges[vertices.IndexOf(selectedVertex)])
+            {
+                if (edge.StartVertex == selectedVertex && edge.EndVertex == targetVertex ||
+                    edge.StartVertex == targetVertex && edge.EndVertex == selectedVertex)
+                {
+                    doesEdgeExist = true;
+                    break;
+                }
+            }
+            if (doesEdgeExist)
+                return;
+
             Line line = new Line
             {
                 X1 = Canvas.GetLeft(selectedVertex) + selectedVertex.Width / 2,
@@ -278,17 +293,45 @@ namespace GraphApp
                 Stroke = GenerateGradientBrush(selectedVertex.Fill, targetVertex.Fill)
             };
 
-            Edge edge = new Edge(selectedVertex, targetVertex, line);
-            canvas.Children.Insert(0, edge.Line);
+            Edge newEdge = new Edge(selectedVertex, targetVertex, line);
+            canvas.Children.Insert(0, newEdge.Line);
 
-            edges[vertices.IndexOf(selectedVertex)].Add(edge);
-            edges[vertices.IndexOf(targetVertex)].Add(edge);
+            edges[vertices.IndexOf(selectedVertex)].Add(newEdge);
+            edges[vertices.IndexOf(targetVertex)].Add(newEdge);
 
             UpdateEdges(selectedVertex);
         }
 
         private void RemoveEdgeButton_Click(object sender, RoutedEventArgs e)
         {
+            if (selectedVertex == null || targetVertex == null || selectedVertex == targetVertex ||
+                selectedVertex.Opacity < 1 || targetVertex.Opacity < 1)
+                return;
+
+            int selectedVertexIndex = vertices.IndexOf(selectedVertex);
+            int targetVertexIndex = vertices.IndexOf(targetVertex);
+
+            List<Edge> selectedVertexEdges = edges[selectedVertexIndex];
+            List<Edge> targetVertexEdges = edges[targetVertexIndex];
+
+            Edge? edgeToRemove = null;
+
+            foreach (Edge edge in selectedVertexEdges)
+            {
+                if (edge.StartVertex == selectedVertex && edge.EndVertex == targetVertex ||
+                    edge.StartVertex == targetVertex && edge.EndVertex == selectedVertex)
+                {
+                    edgeToRemove = edge;
+                    break;
+                }
+            }
+
+            if (edgeToRemove != null)
+            {
+                canvas.Children.Remove(edgeToRemove.Line);
+                selectedVertexEdges.Remove(edgeToRemove);
+                targetVertexEdges.Remove(edgeToRemove);
+            }
         }
     }
 
