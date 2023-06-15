@@ -1,139 +1,310 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-// Napisz program, który będzie wyświetlał graf prosty o maksymalnie 10 wierzchołkach. Wierzchołki
-// grafu to koła, które posiadają numery od 1 do 10, są ustalonej wielkości i mają zadany kolor, który
-// można zmienić, klikając prawym klawiszem myszy nad kołem. Wierzchołki połączone są
-// krawędziami (grubymi liniami), początkowo graf jest cykliczny. Przyciskając odpowiednie przyciski
-// można dodać i usunąć krawędź między wybranymi widocznymi wierzchołkami. Dowolny
-// wierzchołek (wraz ze wszystkimi krawędziami z niego wychodzącymi) można ukryć, klikając nad
-// nim prawym klawiszem myszy. Ukryty wierzchołek można wyświetlić używając odpowiedniego
-// przycisku. Klikając lewym klawiszem myszy nad wierzchołkiem i przesuwając mysz trzymając
-// wciśnięty klawisz, wierzchołek ten można przemieścić do miejsca, w którym klawisz myszy zostanie
-// puszczony. Każda krawędź grafu łącząca dwa wierzchołki o zadanych kolorach powinny mieć kolor
-// przechodzący z jednego w drugi w sposób ciągły. Miło byłoby, gdyby na pasku tytułu okna aplikacji
-// wyświetlana była unikatowa ikonka programu oraz jego nazwa.
-
-namespace list10
+namespace GraphApp
 {
-    // <summary>
-    // Interaction logic for MainWindow.xaml
-    // </summary>
     public partial class MainWindow : Window
     {
+        private const int MaxVertices = 10;
+        private List<UIElement> vertices = new List<UIElement>();
+        private List<Line> edges = new List<Line>();
+        private Ellipse? selectedVertex = null;
+        private bool isDragging = false;
+        private Point offset;
+
         public MainWindow()
         {
             InitializeComponent();
-            DrawGraph();
+            canvas.Loaded += Canvas_Loaded;
         }
 
-        private void DrawGraph()
+        private void Canvas_Loaded(object sender, RoutedEventArgs e)
         {
-            uint n = 10;
-            double r = 100;
-            double x0 = 200;
-            double y0 = 200;
-            double alpha = 2 * Math.PI / n;
-            double x, y;
+            GenerateVertices();
+            GenerateEdges();
+        }
 
-            for (uint i = 0; i < n; i++)
+        private void GenerateVertices(double radius = 150, uint size = 50)
+        {
+            double alpha = 2 * Math.PI / MaxVertices;
+
+            for (int i = 0; i < MaxVertices; i++)
             {
-                x = x0 + r * Math.Cos(i * alpha);
-                y = y0 + r * Math.Sin(i * alpha);
-                DrawVertex(i + 1, x, y);
+                Ellipse vertex = new Ellipse
+                {
+                    Width = size,
+                    Height = size,
+                    Fill = Brushes.Turquoise,
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 2,
+                    Tag = i + 1
+                };
+
+                vertex.MouseRightButtonUp += Vertex_MouseRightButtonUp;
+                vertex.MouseLeftButtonDown += Vertex_MouseLeftButtonDown;
+                vertex.MouseLeftButtonUp += Vertex_MouseLeftButtonUp;
+
+                double x = radius * Math.Cos(alpha * i) + canvas.ActualWidth / 2;
+                double y = radius * Math.Sin(alpha * i) + canvas.ActualHeight / 2;
+
+                Canvas.SetLeft(vertex, x - vertex.Width / 2);
+                Canvas.SetTop(vertex, y - vertex.Height / 2);
+
+                canvas.Children.Add(vertex);
+                vertices.Add(vertex);
             }
         }
 
-        private void DrawVertex(uint number, double x, double y, uint size = 50, Brush? color = null)
+        private void GenerateEdges()
         {
-            if (color == null)
+            for (int i = 0; i < MaxVertices; i++)
             {
-                color = Brushes.Turquoise;
+                int nextIndex = (i + 1) % MaxVertices;
+                Ellipse currentVertex = (Ellipse)vertices[i];
+                Ellipse nextVertex = (Ellipse)vertices[nextIndex];
+
+                double currentLeft = Canvas.GetLeft(currentVertex);
+                double currentTop = Canvas.GetTop(currentVertex);
+                double nextLeft = Canvas.GetLeft(nextVertex);
+                double nextTop = Canvas.GetTop(nextVertex);
+
+                Line edge = new Line
+                {
+                    X1 = currentLeft + currentVertex.Width / 2,
+                    Y1 = currentTop + currentVertex.Height / 2,
+                    X2 = nextLeft + nextVertex.Width / 2,
+                    Y2 = nextTop + nextVertex.Height / 2,
+                    StrokeThickness = 5,
+                    Stroke = GenerateGradientBrush(currentVertex.Fill, nextVertex.Fill)
+                };
+
+                canvas.Children.Insert(0, edge);
+                edges.Add(edge);
             }
-            Grid grid = new()
-            {
-                Width = 50,
-                Height = 50,
-            };
-            Ellipse ellipse = new()
-            {
-                Fill = color,
-                Stroke = Brushes.Black,
-                StrokeThickness = 2,
-            };
-            Label label = new()
-            {
-                FontSize = 20,
-                Content = number,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            ellipse.MouseDown += Canvas_MouseLeftButtonDown;
-            ellipse.MouseUp += Canvas_MouseLeftButtonUp;
-            ellipse.MouseRightButtonDown += Canvas_MouseRightButtonDown;
-            ellipse.MouseRightButtonUp += Canvas_MouseRightButtonUp;
-            grid.Children.Add(ellipse);
-            grid.Children.Add(label);
-            Canvas.SetLeft(grid, x - grid.Width / 2);
-            Canvas.SetTop(grid, y - grid.Height / 2);
-            canvas.Children.Add(grid);
         }
 
-        private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
+        private LinearGradientBrush GenerateGradientBrush(Brush startColor, Brush endColor)
         {
+            GradientStopCollection gradientStops = new GradientStopCollection
+            {
+                new GradientStop(((SolidColorBrush)startColor).Color, 0),
+                new GradientStop(((SolidColorBrush)endColor).Color, 1)
+            };
 
+            LinearGradientBrush gradientBrush = new LinearGradientBrush(gradientStops)
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 1)
+            };
+
+            return gradientBrush;
         }
 
-        private void RemoveEdgeButton_Click(object sender, RoutedEventArgs e)
+        private void Vertex_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
+            Ellipse vertex = (Ellipse)sender;
+            vertex.Fill = GenerateRandomColor();
+            UpdateEdges(vertex);
+        }
 
+        private SolidColorBrush GenerateRandomColor()
+        {
+            Random random = new Random();
+            byte[] colorBytes = new byte[3];
+            random.NextBytes(colorBytes);
+
+            SolidColorBrush brush = new SolidColorBrush(Color.FromRgb(colorBytes[0], colorBytes[1], colorBytes[2]));
+            return brush;
+        }
+
+        private void Vertex_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!isDragging)
+            {
+                selectedVertex = (Ellipse)sender;
+                offset = e.GetPosition(selectedVertex);
+                selectedVertex.CaptureMouse();
+                isDragging = true;
+            }
+        }
+
+        private void Vertex_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (isDragging && selectedVertex != null)
+            {
+                selectedVertex.ReleaseMouseCapture();
+                isDragging = false;
+            }
+        }
+
+        private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left && selectedVertex != null)
+            {
+                Point currentPosition = e.GetPosition(canvas);
+                double newX = currentPosition.X - offset.X;
+                double newY = currentPosition.Y - offset.Y;
+
+                Canvas.SetLeft(selectedVertex, newX);
+                Canvas.SetTop(selectedVertex, newY);
+
+                UpdateEdges(selectedVertex);
+            }
+        }
+
+        private void Canvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (isDragging && selectedVertex != null)
+            {
+                selectedVertex.ReleaseMouseCapture();
+                isDragging = false;
+            }
+        }
+
+        private void Canvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDragging && selectedVertex != null)
+            {
+                Point currentPosition = e.GetPosition(canvas);
+                double newX = currentPosition.X - offset.X;
+                double newY = currentPosition.Y - offset.Y;
+
+                Canvas.SetLeft(selectedVertex, newX);
+                Canvas.SetTop(selectedVertex, newY);
+
+                UpdateEdges(selectedVertex);
+            }
+        }
+
+        private void UpdateEdges(Ellipse vertex)
+        {
+            int vertexIndex = vertices.IndexOf(vertex);
+            int nextIndex = (vertexIndex + 1) % MaxVertices;
+            int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
+
+            Ellipse nextVertex = (Ellipse)vertices[nextIndex];
+            Ellipse previousVertex = (Ellipse)vertices[previousIndex];
+
+            Line outgoingEdge = edges[vertexIndex];
+            Line incomingEdge = edges[previousIndex];
+
+            outgoingEdge.X1 = Canvas.GetLeft(vertex) + vertex.Width / 2;
+            outgoingEdge.Y1 = Canvas.GetTop(vertex) + vertex.Height / 2;
+            outgoingEdge.X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2;
+            outgoingEdge.Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2;
+
+            incomingEdge.X2 = Canvas.GetLeft(vertex) + vertex.Width / 2;
+            incomingEdge.Y2 = Canvas.GetTop(vertex) + vertex.Height / 2;
+
+            LinearGradientBrush brush = GenerateGradientBrush(previousVertex.Fill, vertex.Fill);
+            outgoingEdge.Stroke = brush;
+            incomingEdge.Stroke = brush;
         }
 
         private void HideVertexButton_Click(object sender, RoutedEventArgs e)
         {
-
+            if (selectedVertex != null)
+            {
+                selectedVertex.Opacity = 0.2;
+                HideConnectedEdges(selectedVertex);
+            }
         }
 
         private void ShowVertexButton_Click(object sender, RoutedEventArgs e)
         {
-
+            if (selectedVertex != null && selectedVertex.Opacity < 1)
+            {
+                selectedVertex.Opacity = 1;
+                ShowConnectedEdges(selectedVertex);
+            }
         }
 
-        private void ChangeColorButton_Click(object sender, RoutedEventArgs e)
+        private void HideConnectedEdges(Ellipse vertex)
         {
+            int vertexIndex = vertices.IndexOf(vertex);
+            int nextIndex = (vertexIndex + 1) % MaxVertices;
+            int previousIndex = (vertexIndex - 1 + MaxVertices) % MaxVertices;
 
+            Line outgoingEdge = edges[vertexIndex];
+            Line incomingEdge = edges[previousIndex];
+
+            outgoingEdge.Visibility = Visibility.Hidden;
+            incomingEdge.Visibility = Visibility.Hidden;
         }
 
-        private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void ShowConnectedEdges(Ellipse vertex)
         {
+            int vertexIndex = vertices.IndexOf(vertex);
+            int nextIndex = (vertexIndex + 1) % MaxVertices;
+            int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
 
+            Line outgoingEdge = edges[vertexIndex];
+            Line incomingEdge = edges[previousIndex];
+
+            outgoingEdge.Visibility = Visibility.Visible;
+            incomingEdge.Visibility = Visibility.Visible;
         }
 
-        private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void AddEdgeButton_Click(object sender, RoutedEventArgs e)
         {
+            if (selectedVertex != null)
+            {
+                int vertexIndex = vertices.IndexOf(selectedVertex);
+                int nextIndex = (vertexIndex + 1) % MaxVertices;
+                Ellipse nextVertex = (Ellipse)vertices[nextIndex];
 
+                Line newEdge = new Line
+                {
+                    X1 = Canvas.GetLeft(selectedVertex) + selectedVertex.Width / 2,
+                    Y1 = Canvas.GetTop(selectedVertex) + selectedVertex.Height / 2,
+                    X2 = Canvas.GetLeft(nextVertex) + nextVertex.Width / 2,
+                    Y2 = Canvas.GetTop(nextVertex) + nextVertex.Height / 2,
+                    StrokeThickness = 5,
+                    Stroke = GenerateGradientBrush(selectedVertex.Fill, nextVertex.Fill)
+                };
+
+                edges.Insert(vertexIndex, newEdge);
+                canvas.Children.Insert(0, newEdge);
+
+                UpdateEdgeIndices();
+            }
         }
 
-        private void Canvas_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        private void RemoveEdgeButton_Click(object sender, RoutedEventArgs e)
         {
+            if (selectedVertex != null)
+            {
+                int vertexIndex = vertices.IndexOf(selectedVertex);
+                int previousIndex = (vertexIndex + MaxVertices - 1) % MaxVertices;
 
+                Line outgoingEdge = edges[vertexIndex];
+                Line incomingEdge = edges[previousIndex];
+
+                canvas.Children.Remove(outgoingEdge);
+                canvas.Children.Remove(incomingEdge);
+                edges.Remove(outgoingEdge);
+                edges.Remove(incomingEdge);
+
+                UpdateEdgeIndices();
+            }
         }
 
-        private void Canvas_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        private void UpdateEdgeIndices()
         {
+            for (int i = 0; i < edges.Count; i++)
+            {
+                Line edge = edges[i];
+                Ellipse vertex = (Ellipse)vertices[i];
+                int nextIndex = (i + 1) % MaxVertices;
+                Ellipse nextVertex = (Ellipse)vertices[nextIndex];
 
+                edge.Stroke = GenerateGradientBrush(vertex.Fill, nextVertex.Fill);
+            }
         }
     }
 }
